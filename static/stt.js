@@ -111,10 +111,12 @@ export class SpeechToText {
                         let output = await this.transcriber(wavBlobUrl);
 
                         if (output.text === undefined || output.text.length==0) {
+                            console.log('Trying transcription again 1...');
                             output = await this.transcriber(wavBlobUrl);
                         }
                         
                         if (output.text === undefined || output.text.length==0) {
+                            console.log('Trying transcription again 2...');
                             output = await this.transcriber(wavBlobUrl);
                         }
 

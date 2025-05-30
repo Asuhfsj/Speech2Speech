@@ -49,7 +49,7 @@ export class Conversation {
         //console.log('Conversation history:', conversationHistory);
         console.log("reponse", reponse);
 
-        textToSpeech(reponse, "af");
+        textToSpeech(reponse, "af_heart");
 
         //updateTranscriptionStatus(transcriptionStatus, 'Conversation:');
 

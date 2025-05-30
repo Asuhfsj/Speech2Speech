@@ -37,9 +37,9 @@ self.addEventListener("message", async (e) => {
     for (const chunk of chunks) {
         console.log("chunk", chunk);
         const audio = await tts.generate(chunk, { voice });
+        let ab = audio.audio.buffer;
         console.log("generate done");
-        const wavData = audio.toWav(); // this is now an ArrayBuffer
-        self.postMessage({ status: "stream", audio: wavData, text: chunk }, [wavData]);
+        self.postMessage({ status: "stream", audio: ab, text: chunk }, [ab]);
     }
 
     self.postMessage({ status: "complete" });
