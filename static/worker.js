@@ -1,4 +1,5 @@
 import { KokoroTTS } from "./kokoro.js";
+import { splitTextSmart } from "./semantic-split.js";
 
 async function detectWebGPU() {
     try {
@@ -30,11 +31,15 @@ const tts = await KokoroTTS.from_pretrained(model_id, {
 self.postMessage({ status: "ready", voices: tts.voices, device });
 
 self.addEventListener("message", async (e) => {
-    const { text, voice } = e.data;
+    let chunks = splitTextSmart(text, 600);
 
-    const audio = await tts.generate(text, { voice });
-    const wavData = audio.toWav(); // this is now an ArrayBuffer
-    self.postMessage({ status: "stream", audio: wavData, text: text }, [wavData]);
+    for (const chunk of chunks) {
+        console.log("chunk", chunk);
+        const audio = await tts.generate(chunk, { voice });
+        console.log("generate done");
+        const wavData = audio.toWav(); // this is now an ArrayBuffer
+        self.postMessage({ status: "stream", audio: wavData, text: chunk }, [wavData]);
+    }
 
     self.postMessage({ status: "complete" });
 });

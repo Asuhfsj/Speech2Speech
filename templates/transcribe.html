@@ -2,17 +2,16 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Voice Recorder & Transcription</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/conversation.css">
 </head>
 
 <body>
     <h1>Voice Recorder & Transcription</h1>
 
-    <div class="container">
-        <div class="recorder-container">
+    <div class="container">        <div class="recorder-container">
             <h2>Record Your Voice</h2>
             <div class="status" id="recordingStatus">Click "Start Recording" to begin</div>
             <div id="recordingIndicator" style="display: none;">
@@ -22,6 +21,7 @@
             </div>
             <button id="startRecording">Start Recording</button>
             <button id="stopRecording" disabled>Stop Recording</button>
+            <button id="resetConversation">Reset Conversation</button>
         </div>
 
         <div class="transcription-container">
@@ -30,240 +30,7 @@
             <div id="transcriptionResult"></div>
         </div>
     </div>
-
-    <script type="module">
-        import { pipeline } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1/dist/transformers.js";
-
-        import { convertAudioBufferToWav, resampleAudio } from "/static/convertAudioBufferToWav.js";
-
-        let my_worker = new Worker(new URL("./static/worker.js", import.meta.url), { type: "module" });
-        let audioQueue = [];
-        let audioContext = new AudioContext();
-        let isPlaying = false;
-
-        const playAudioQueue = async () => {
-            if (isPlaying || audioQueue.length === 0) return;
-            isPlaying = true;
-            try {
-                while (audioQueue.length > 0) {
-                    const audioBuffer = audioQueue.shift();
-                    const source = audioContext.createBufferSource();
-                    source.buffer = audioBuffer;
-                    source.connect(audioContext.destination);
-                    if (audioContext.state === "suspended") {
-                        await audioContext.resume();
-                        console.log("AudioContext resumed.");
-                    }
-                    console.log("Playing audio buffer");
-                    await new Promise((resolve) => {
-                        source.onended = resolve;
-                        source.start();
-                    });
-                    console.log("Audio playback finished.");
-                }
-            } catch (error) {
-                console.error("Error during audio playback:", error);
-            } finally {
-                isPlaying = false;
-            }
-        };
-
-        const onMessageReceived = async (e) => {
-            switch (e.data.status) {
-                case "ready":
-                    break;
-
-                case "device":
-                    console.log(e.data);
-                    break;
-
-                case "progress":
-                    break;
-
-                case "stream":
-                    console.log("stream", e.data);
-                    audioQueue.push(await audioContext.decodeAudioData(e.data.audio));
-                    playAudioQueue();
-                    break;
-            }
-        };
-
-        const onErrorReceived = (e) => { console.error("Worker error:", e); };
-
-        my_worker.addEventListener("message", onMessageReceived);
-        my_worker.addEventListener("error", onErrorReceived);
-
-
-        async function detectWebGPU() {
-            try {
-                const adapter = await navigator.gpu.requestAdapter();
-                return !!adapter;
-            } catch (e) {
-                return false;
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            let mediaRecorder;
-            let audioChunks = [];
-            let recordingStartTime;
-            let timerInterval;
-            let mode;
-            let wav;
-            const startButton = document.getElementById('startRecording');
-            const stopButton = document.getElementById('stopRecording');
-            const recordingStatus = document.getElementById('recordingStatus');
-            const recordingIndicator = document.getElementById('recordingIndicator');
-            const recordingTimer = document.getElementById('recordingTimer');
-            const playbackStatus = document.getElementById('playbackStatus');
-            const transcriptionStatus = document.getElementById('transcriptionStatus');
-            const transcriptionResult = document.getElementById('transcriptionResult');
-
-            function updateTimer() {
-                const elapsed = new Date() - recordingStartTime;
-                const seconds = Math.floor((elapsed / 1000) % 60).toString().padStart(2, '0');
-                const minutes = Math.floor((elapsed / 1000 / 60) % 60).toString().padStart(2, '0');
-                recordingTimer.textContent = `${minutes}:${seconds}`;
-            }
-
-            startButton.addEventListener('click', function () {
-                navigator.mediaDevices.getUserMedia({ audio: true })
-                    .then(stream => {
-                        startButton.disabled = true;
-                        stopButton.disabled = false;
-
-                        recordingStatus.textContent = 'Recording...';
-                        recordingIndicator.style.display = 'block';
-                        transcriptionStatus.textContent = 'Recording in progress...';
-                        transcriptionResult.textContent = '';
-
-                        recordingStartTime = new Date();
-                        timerInterval = setInterval(updateTimer, 1000);
-                        updateTimer();
-
-
-                        mode = "WAV";
-                        const options = { mimeType: 'audio/wav' };
-                        try {
-                            mediaRecorder = new MediaRecorder(stream, options);
-                        } catch (e) {
-                            console.info('WAV format not supported, using default format.');
-                            mediaRecorder = new MediaRecorder(stream);
-                            mode = "OGG";
-                        }
-                        audioChunks = [];
-
-                        mediaRecorder.ondataavailable = event => {
-                            audioChunks.push(event.data);
-                        };
-
-                        mediaRecorder.start();
-                    })
-                    .catch(error => {
-                        console.error('Error accessing microphone:', error);
-                        recordingStatus.textContent = 'Error accessing microphone: ' + error.message;
-                    });
-            });
-
-            // Stop recording and process the audio locally
-            stopButton.addEventListener('click', function () {
-                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                    mediaRecorder.stop();
-                    clearInterval(timerInterval);
-
-                    recordingIndicator.style.display = 'none';
-                    recordingStatus.textContent = 'Recording stopped. Processing...';
-                    startButton.disabled = false;
-                    stopButton.disabled = true; mediaRecorder.onstop = async () => {
-                        mediaRecorder.stream.getTracks().forEach(track => track.stop());
-                        // Create blob with WAV MIME type
-                        let type = { type: 'audio/webm;codecs=opus' }
-                        if (mode === "WAV") {
-                            type = { type: 'audio/wav' };
-                        }
-
-                        if (mode === "WAV") {
-                            console.log('WAV format is already selected.');
-                        } else {
-                            console.info('Converting audio to WAV format...');
-                            const audioContext = new AudioContext();
-                            let audioBlob = new Blob(audioChunks, { type: type });
-                            const arrayBuffer = await audioBlob.arrayBuffer();
-                            //console.log("arrayBuffer", arrayBuffer)
-                            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-                            //console.log('Audio buffer decoded:', audioBuffer);
-                            //wav = audioBuffer.getChannelData(0); // Float32Array of first channel
-                            //console.log(wav)
-                            wav = convertAudioBufferToWav(audioBuffer);
-                        }
-
-                        transcriptionStatus.textContent = 'Transcribing audio...';
-                        try {
-                            const isWebGPUSupported = await detectWebGPU();
-                            const device = isWebGPUSupported ? "webgpu" : "wasm";
-                            const dtype = isWebGPUSupported ? "fp32" : "q8";
-                            const options = {
-                                device: device,
-                                dtype: dtype,
-                                quantized: !isWebGPUSupported,
-                            };
-
-                            const transcriber = await pipeline(
-                                'automatic-speech-recognition',
-                                'onnx-community/moonshine-base-ONNX',
-                                options
-                            );
-
-                            console.log('Transcriber loaded:', transcriber);
-
-
-                            //wav = await resampleAudio(wav, 16000);
-                            //const output = await transcriber(wav);
-
-                            let wavBlob = new Blob([wav], { type: 'audio/wav' });
-                            const wavBlobUrl = URL.createObjectURL(wavBlob);
-                            const output = await transcriber(wavBlobUrl);
-
-                            console.log('Transcription output:', output.text)
-
-                            const response = await fetch("http://localhost:8080/v1/chat/completions", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                    "messages": [
-                                        {
-                                            "role": "system",
-                                            "content": "You are a customer."
-                                        },
-                                        {
-                                            "role": "user",
-                                            "content": output.text
-                                        }
-                                    ]
-                                })
-                            });
-
-                            const data = await response.json();
-                            const text = data.choices[0].message.content;
-                            console.log(text);
-
-
-                            my_worker.postMessage({ type: "generate", text: text, voice: "af" });
-
-
-                            transcriptionStatus.textContent = 'Transcription complete:';
-                            transcriptionResult.innerHTML = `<p>${text}</p>`;
-                            console.log('Transcription output:', data);
-                        } catch (error) {
-                            console.error('Error during transcription:', error);
-                            transcriptionStatus.textContent = 'Error during transcription:';
-                            transcriptionResult.innerHTML = `<p class="error">${error.message}</p>`;
-                        }
-                    };
-                }
-            });
-        });
-    </script>
+    <script type="module" src="/static/transcribe.js"></script>
 </body>
 
 </html>
