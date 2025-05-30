@@ -3,16 +3,17 @@ import { SpeechToText } from "./stt.js";
 import { textToSpeech } from "./tts.js";
 
 export class Conversation {
-    initialize() {
-        this.resetConversation();
+    constructor(system_prompt) {
+        this.system_prompt = system_prompt;
         this.speechToText = new SpeechToText();
+        this.resetConversation();
     }
 
     resetConversation() {
         this.conversationHistory = [
             {
                 role: "system",
-                content: "You are a customer."
+                content: this.system_prompt
             }
         ];
     }

@@ -61,5 +61,8 @@ export function textToSpeech(text, voice) {
         console.error("Text and voice parameters are required for text-to-speech.");
         return;
     }
+
+    text = text.replaceAll("*", "");
+
     my_worker.postMessage({ type: "generate", text: text, voice: voice });
 }

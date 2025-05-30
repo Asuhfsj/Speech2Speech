@@ -108,8 +108,17 @@ export class SpeechToText {
                         audioPlayback.style.display = 'block';
                         playbackStatus.textContent = 'Audio ready for playback:';
 
-                        const output = await this.transcriber(wavBlobUrl);
-                        //console.log('Transcription output 1:', output);
+                        let output = await this.transcriber(wavBlobUrl);
+
+                        if (output.text === undefined || output.text.length==0) {
+                            output = await this.transcriber(wavBlobUrl);
+                        }
+                        
+                        if (output.text === undefined || output.text.length==0) {
+                            output = await this.transcriber(wavBlobUrl);
+                        }
+
+                        console.log('Transcription output 1:', output);
                         resolve(output.text);
 
                     } catch (error) {

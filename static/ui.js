@@ -43,9 +43,8 @@ function displayTranscriptionError(transcriptionStatus, transcriptionResult, err
     transcriptionResult.innerHTML = `<p class="error">${error.message}</p>`;
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-    const startButton = document.getElementById('startRecording');
-    const stopButton = document.getElementById('stopRecording');
+document.addEventListener('DOMContentLoaded', async function () {
+    const toggleButton = document.getElementById('toggleRecording');
     const recordingStatus = document.getElementById('recordingStatus');
     const recordingIndicator = document.getElementById('recordingIndicator');
     const recordingTimer = document.getElementById('recordingTimer');
@@ -55,50 +54,48 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let recordingStartTime;
     let timerInterval;
+    let isRecording = false;
 
+    let system_prompt = await (await fetch("static/system_prompt.txt")).text();
+    system_prompt = system_prompt.replaceAll("{{char}}", "Vanessa").replaceAll("{{user}}", "Ray");
 
-    let conversation = new Conversation();
-    conversation.initialize();
- 
-    startButton.disabled = false;
-    stopButton.disabled = true;
-
-
+    let conversation = new Conversation(system_prompt);
     resetButton.addEventListener('click', function () {
         conversation.resetConversation();
         transcriptionStatus.textContent = 'Conversation reset. Ready for new recording.';
         transcriptionResult.textContent = '';
         console.log('Conversation history reset');
-        updateResetButtonText(conversationHistory, resetButton);
+        updateResetButtonText(conversation.conversationHistory, resetButton);
     });
 
-    startButton.addEventListener('click', function () {
-        startButton.disabled = true;
-        stopButton.disabled = false;
-        recordingStatus.textContent = 'Recording...';
-        recordingIndicator.style.display = 'block';
-        transcriptionStatus.textContent = 'Recording in progress...';
-        transcriptionResult.textContent = '';
-        recordingStartTime = new Date();
-        timerInterval = setInterval(() => updateTimer(recordingStartTime, recordingTimer), 1000);
-        updateTimer(recordingStartTime, recordingTimer);
-        conversation.startRecording();
+    toggleButton.addEventListener('click', function () {
+        if (!isRecording) {
+            isRecording = true;
+            toggleButton.textContent = 'Stop Recording';
+            recordingStatus.textContent = 'Recording...';
+            recordingIndicator.style.display = 'block';
+            transcriptionStatus.textContent = 'Recording in progress...';
+            transcriptionResult.textContent = '';
+            recordingStartTime = new Date();
+            timerInterval = setInterval(() => updateTimer(recordingStartTime, recordingTimer), 1000);
+            updateTimer(recordingStartTime, recordingTimer);
+            conversation.startRecording();
+        } else {
+            isRecording = false;
+            toggleButton.textContent = 'Start Recording';
+            recordingStatus.textContent = 'Recording stopped. Processing...';
+            transcriptionStatus.textContent = 'Transcribing audio...';
+            conversation.stopRecording().then(() => {
+                // Update the conversation display after processing
+                displayConversation(conversation.conversationHistory, transcriptionResult);
+                updateResetButtonText(conversation.conversationHistory, resetButton);
+            });
+            clearInterval(timerInterval);
+            recordingIndicator.style.display = 'none';
+        }
     });
-
-    stopButton.addEventListener('click', function () {
-        recordingStatus.textContent = 'Recording stopped. Processing...';
-        transcriptionStatus.textContent = 'Transcribing audio...';
-        conversation.stopRecording();
-        clearInterval(timerInterval);
-        recordingIndicator.style.display = 'none';
-        startButton.disabled = false;
-        stopButton.disabled = true;
-
-    });
-
-
-    //updateResetButtonText(conversationHistory, resetButton);
-    //updateResetButtonText(conversationHistory, resetButton);
+    // Initialize the reset button state
+    updateResetButtonText(conversation.conversationHistory, resetButton);
 
 
 
