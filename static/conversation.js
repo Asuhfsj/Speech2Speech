@@ -26,6 +26,9 @@ export class Conversation {
         let text = await this.speechToText.stopRecording();
         console.log('Transcription output2:', text)
 
+        const transcriptionStatus = document.getElementById('transcriptionStatus');
+        transcriptionStatus.textContent = text;
+
         this.conversationHistory.push({
             role: "user",
             content: text
@@ -45,20 +48,9 @@ export class Conversation {
             "role": "assistant",
             "content": reponse
         });
-
-        //console.log('Conversation history:', conversationHistory);
         console.log("reponse", reponse);
-
         textToSpeech(reponse, "af_heart");
-
-        //updateTranscriptionStatus(transcriptionStatus, 'Conversation:');
-
-        //displayConversation(this.conversationHistory, transcriptionResult);
-
     }
-
-
-
 }
 
 

@@ -34,10 +34,6 @@ function displayConversation(conversationHistory, transcriptionResult) {
     transcriptionResult.innerHTML = conversationHTML;
 }
 
-
-    
-
-
 function displayTranscriptionError(transcriptionStatus, transcriptionResult, error) {
     transcriptionStatus.textContent = 'Error during transcription:';
     transcriptionResult.innerHTML = `<p class="error">${error.message}</p>`;
@@ -96,7 +92,4 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
     // Initialize the reset button state
     updateResetButtonText(conversation.conversationHistory, resetButton);
-
-
-
 });
