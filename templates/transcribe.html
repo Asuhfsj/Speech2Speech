@@ -78,12 +78,12 @@
                         recordingIndicator.style.display = 'block';
                         transcriptionStatus.textContent = 'Recording in progress...';
                         transcriptionResult.textContent = '';
-                        
+
                         recordingStartTime = new Date();
                         timerInterval = setInterval(updateTimer, 1000);
                         updateTimer();
 
-                        
+
                         mode = "WAV";
                         const options = { mimeType: 'audio/wav' };
                         try {
@@ -116,7 +116,7 @@
                     recordingIndicator.style.display = 'none';
                     recordingStatus.textContent = 'Recording stopped. Processing...';
                     startButton.disabled = false;
-                    stopButton.disabled = true;                    mediaRecorder.onstop = async () => {
+                    stopButton.disabled = true; mediaRecorder.onstop = async () => {
                         mediaRecorder.stream.getTracks().forEach(track => track.stop());
                         // Create blob with WAV MIME type
                         let type = { type: 'audio/webm;codecs=opus' }
@@ -124,7 +124,7 @@
                             type = { type: 'audio/wav' };
                         }
 
-                        if ( mode === "WAV" ) {
+                        if (mode === "WAV") {
                             console.log('WAV format is already selected.');
                         } else {
                             console.info('Converting audio to WAV format...');
@@ -159,17 +159,42 @@
                             console.log('Transcriber loaded:', transcriber);
 
 
+                            //wav = await resampleAudio(wav, 16000);
+                            //const output = await transcriber(wav);
+
                             let wavBlob = new Blob([wav], { type: 'audio/wav' });
                             const wavBlobUrl = URL.createObjectURL(wavBlob);
                             const output = await transcriber(wavBlobUrl);
 
-                            //wav = await resampleAudio(wav, 16000);
-                            //const output = await transcriber(wav);
-                            
+                            console.log('Transcription output:', output.text)
+
+                            const response = await fetch("http://localhost:8080/v1/chat/completions", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    "messages": [
+                                        {
+                                            "role": "system",
+                                            "content": "You are a customer."
+                                        },
+                                        {
+                                            "role": "user",
+                                            "content": output.text
+                                        }
+                                    ]
+                                })
+                            });
+
+                            const data = await response.json();
+                            console.log(data.choices[0].message.content);
+
+
+
+
 
                             transcriptionStatus.textContent = 'Transcription complete:';
-                            transcriptionResult.innerHTML = `<p>${output.text}</p>`;
-                            console.log('Transcription output:', output);
+                            transcriptionResult.innerHTML = `<p>${data.choices[0].message.content}</p>`;
+                            console.log('Transcription output:', data);
                         } catch (error) {
                             console.error('Error during transcription:', error);
                             transcriptionStatus.textContent = 'Error during transcription:';
