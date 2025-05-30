@@ -36,6 +36,64 @@
 
         import { convertAudioBufferToWav, resampleAudio } from "/static/convertAudioBufferToWav.js";
 
+        let my_worker = new Worker(new URL("./static/worker.js", import.meta.url), { type: "module" });
+        let audioQueue = [];
+        let audioContext = new AudioContext();
+        let isPlaying = false;
+
+        const playAudioQueue = async () => {
+            if (isPlaying || audioQueue.length === 0) return;
+            isPlaying = true;
+            try {
+                while (audioQueue.length > 0) {
+                    const audioBuffer = audioQueue.shift();
+                    const source = audioContext.createBufferSource();
+                    source.buffer = audioBuffer;
+                    source.connect(audioContext.destination);
+                    if (audioContext.state === "suspended") {
+                        await audioContext.resume();
+                        console.log("AudioContext resumed.");
+                    }
+                    console.log("Playing audio buffer");
+                    await new Promise((resolve) => {
+                        source.onended = resolve;
+                        source.start();
+                    });
+                    console.log("Audio playback finished.");
+                }
+            } catch (error) {
+                console.error("Error during audio playback:", error);
+            } finally {
+                isPlaying = false;
+            }
+        };
+
+        const onMessageReceived = async (e) => {
+            switch (e.data.status) {
+                case "ready":
+                    break;
+
+                case "device":
+                    console.log(e.data);
+                    break;
+
+                case "progress":
+                    break;
+
+                case "stream":
+                    console.log("stream", e.data);
+                    audioQueue.push(await audioContext.decodeAudioData(e.data.audio));
+                    playAudioQueue();
+                    break;
+            }
+        };
+
+        const onErrorReceived = (e) => { console.error("Worker error:", e); };
+
+        my_worker.addEventListener("message", onMessageReceived);
+        my_worker.addEventListener("error", onErrorReceived);
+
+
         async function detectWebGPU() {
             try {
                 const adapter = await navigator.gpu.requestAdapter();
@@ -186,14 +244,15 @@
                             });
 
                             const data = await response.json();
-                            console.log(data.choices[0].message.content);
+                            const text = data.choices[0].message.content;
+                            console.log(text);
 
 
-
+                            my_worker.postMessage({ type: "generate", text: text, voice: "af" });
 
 
                             transcriptionStatus.textContent = 'Transcription complete:';
-                            transcriptionResult.innerHTML = `<p>${data.choices[0].message.content}</p>`;
+                            transcriptionResult.innerHTML = `<p>${text}</p>`;
                             console.log('Transcription output:', data);
                         } catch (error) {
                             console.error('Error during transcription:', error);
