@@ -31,6 +31,7 @@ const tts = await KokoroTTS.from_pretrained(model_id, {
 self.postMessage({ status: "ready", voices: tts.voices, device });
 
 self.addEventListener("message", async (e) => {
+    const { text, voice } = e.data;
     let chunks = splitTextSmart(text, 600);
 
     for (const chunk of chunks) {
