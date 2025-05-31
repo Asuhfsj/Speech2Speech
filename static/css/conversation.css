@@ -31,11 +31,3 @@
 .transcription-container {
     margin-top: 30px;
 }
-
-#resetConversation {
-    background-color: #d15252;
-}
-
-#resetConversation:hover {
-    background-color: #b13939;
-}

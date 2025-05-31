@@ -5,41 +5,63 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Voice Recorder & Transcription</title>
-    <link id="favicon" rel="icon"
-    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='grad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' style='stop-color:%23009688;stop-opacity:1' /><stop offset='100%' style='stop-color:%2300BCD4;stop-opacity:1' /></linearGradient></defs><circle cx='50' cy='50' r='45' fill='url(%23grad)' stroke='%23FFF' stroke-width='2'/><rect x='32' y='30' width='10' height='40' rx='2' fill='white' opacity='0.9'/><rect x='47' y='20' width='10' height='60' rx='2' fill='white' opacity='0.9'/><rect x='62' y='35' width='10' height='30' rx='2' fill='white' opacity='0.9'/><path d='M77 35 Q90 50 77 65' stroke='white' stroke-width='3' fill='none' stroke-linecap='round'/><path d='M82 25 Q100 50 82 75' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' opacity='0.7'/></svg>"
-    type="image/svg+xml">
+    <link id="favicon" rel="icon" href="/static/img/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="stylesheet" href="/static/css/conversation.css">
+    <link rel="stylesheet" href="/static/css/tabs.css">
 </head>
 
 <body>
-    <h1>Voice Recorder & Transcription</h1>
+    <h1>Speech to Speech using Moonshine and Kokoro</h1>
 
-    <div class="container">
-        <div class="recorder-container">
-            <h2>Record Your Voice</h2>
-            <div class="status" id="recordingStatus">Click "Start Recording" to begin</div>            <div id="recordingIndicator" style="display: none;">
-                <span class="recording-indicator"></span>
-                <span>Recording...</span>
-                <div class="timer" id="recordingTimer">00:00</div>
+    <div class="tabs">
+        <div class="tab-buttons">
+            <button class="tab-button active" data-tab="conversation">Conversation</button>
+            <button class="tab-button" data-tab="settings">Settings</button>
+        </div>
+
+        <div id="conversation" class="tab-content active">
+            <div class="container">
+                <div class="recorder-container">
+                    <h2>Record Your Voice</h2>
+                    <div class="status" id="recordingStatus">Click "Start Recording" to begin</div>                    <div id="recordingIndicator" style="display: none;">
+                        <span class="recording-indicator"></span>
+                        <span>Recording...</span>
+                        <div class="timer" id="recordingTimer">00:00</div>
+                    </div>
+                    <button id="toggleRecording">Start Recording</button>
+                </div>
+
+                <div class="transcription-container">
+                    <h2>Transcription</h2>
+                    <div class="status" id="transcriptionStatus">No transcription available</div>
+                    <div id="transcriptionResult"></div>
+                </div>
+
+                <div class="playback-container">
+                    <h2>Playback</h2>
+                    <div class="status" id="playbackStatus">No recording available</div>
+                    <audio id="audioPlayback" controls style="width: 100%; display: none;"></audio>
+                </div>
             </div>
-            <button id="toggleRecording">Start Recording</button>
-            <button id="resetConversation">Reset Conversation</button>
         </div>
 
-        <div class="transcription-container">
-            <h2>Transcription</h2>
-            <div class="status" id="transcriptionStatus">No transcription available</div>
-            <div id="transcriptionResult"></div>
-        </div>
+        <div id="settings" class="tab-content">
+            <div class="settings-container">
+                <div class="setting-group">
+                    <label class="setting-label" for="serverUrl">Chat Inference Server URL:</label>
+                    <input type="text" id="serverUrl" class="setting-input"
+                        value="http://localhost:8080/v1/chat/completions">
+                </div>
 
-        <div class="playback-container">
-            <h2>Playback</h2>
-            <div class="status" id="playbackStatus">No recording available</div>
-            <audio id="audioPlayback" controls style="width: 100%; display: none;"></audio>
+                <div class="setting-group">
+                    <label class="setting-label" for="systemPrompt">System Prompt:</label>
+                    <textarea id="systemPrompt" class="setting-input">You are a helpful AI agent.</textarea>
+                </div>
+            </div>
         </div>
-        
     </div>
+
     <script src="/static/ui.js" type="module"></script>
 </body>
 

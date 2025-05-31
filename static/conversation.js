@@ -1,19 +1,13 @@
-
 import { SpeechToText } from "./stt.js";
 import { textToSpeech } from "./tts.js";
 
 export class Conversation {
-    constructor(system_prompt) {
-        this.system_prompt = system_prompt;
+    constructor() {
         this.speechToText = new SpeechToText();
-        this.resetConversation();
-    }
-
-    resetConversation() {
         this.conversationHistory = [
             {
                 role: "system",
-                content: this.system_prompt
+                content: "placeholder"
             }
         ];
     }
@@ -34,7 +28,12 @@ export class Conversation {
             content: text
         });
 
-        const response = await fetch("http://localhost:8080/v1/chat/completions", {
+        let serverUrl = document.getElementById('serverUrl').value;
+        let system_prompt = document.getElementById('systemPrompt').value;
+
+        this.conversationHistory[0].content = system_prompt;
+
+        const response = await fetch(serverUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

@@ -1,18 +1,6 @@
 import { Conversation } from './conversation.js';
 
 
-// Subtract 1 to exclude the system message
-function updateResetButtonText(conversationHistory, resetButton) {
-    const messageCount = conversationHistory.length - 1;
-    if (messageCount > 0) {
-        resetButton.textContent = `Reset Conversation (${messageCount} messages)`;
-        resetButton.style.display = 'inline-block';
-    } else {
-        resetButton.textContent = 'Reset Conversation';
-        resetButton.style.display = 'none';
-    }
-}
-
 function updateTimer(recordingStartTime, recordingTimer) {
     const elapsed = new Date() - recordingStartTime;
     const seconds = Math.floor((elapsed / 1000) % 60).toString().padStart(2, '0');
@@ -39,6 +27,29 @@ function displayTranscriptionError(transcriptionStatus, transcriptionResult, err
     transcriptionResult.innerHTML = `<p class="error">${error.message}</p>`;
 }
 
+function setupTabNavigation() {
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const tabId = button.getAttribute('data-tab');
+            
+            // Update active button
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            
+            // Show selected tab content
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+                if (content.id === tabId) {
+                    content.classList.add('active');
+                }
+            });
+        });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', async function () {
     const toggleButton = document.getElementById('toggleRecording');
     const recordingStatus = document.getElementById('recordingStatus');
@@ -46,23 +57,14 @@ document.addEventListener('DOMContentLoaded', async function () {
     const recordingTimer = document.getElementById('recordingTimer');
     const transcriptionStatus = document.getElementById('transcriptionStatus');
     const transcriptionResult = document.getElementById('transcriptionResult');
-    const resetButton = document.getElementById('resetConversation');
 
     let recordingStartTime;
     let timerInterval;
     let isRecording = false;
+    
+    setupTabNavigation();
 
-    let system_prompt = await (await fetch("static/system_prompt.txt")).text();
-    system_prompt = system_prompt.replaceAll("{{char}}", "Vanessa").replaceAll("{{user}}", "Ray");
-
-    let conversation = new Conversation(system_prompt);
-    resetButton.addEventListener('click', function () {
-        conversation.resetConversation();
-        transcriptionStatus.textContent = 'Conversation reset. Ready for new recording.';
-        transcriptionResult.textContent = '';
-        console.log('Conversation history reset');
-        updateResetButtonText(conversation.conversationHistory, resetButton);
-    });
+    let conversation = new Conversation();    
 
     toggleButton.addEventListener('click', function () {
         if (!isRecording) {
@@ -84,12 +86,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             conversation.stopRecording().then(() => {
                 // Update the conversation display after processing
                 displayConversation(conversation.conversationHistory, transcriptionResult);
-                updateResetButtonText(conversation.conversationHistory, resetButton);
             });
             clearInterval(timerInterval);
             recordingIndicator.style.display = 'none';
         }
     });
-    // Initialize the reset button state
-    updateResetButtonText(conversation.conversationHistory, resetButton);
 });
