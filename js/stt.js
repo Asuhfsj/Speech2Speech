@@ -1,6 +1,6 @@
 import { pipeline } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1/dist/transformers.min.js";
 
-import { convertAudioBufferToWav, resampleAudio } from "./convertAudioBufferToWav.js";
+import { convertAudioBufferToWav, resampleAudio, applyAudioGain } from "./audio-utils.js";
 
 let mediaRecorder;
 let audioChunks = [];
@@ -19,26 +19,38 @@ async function detectWebGPU() {
 export class SpeechToText {
 
     constructor() {
+        // Create a promise that will resolve when the model is loaded
+        this.modelReadyPromise = new Promise((resolve, reject) => {
+            this._modelReadyResolve = resolve;
+            this._modelReadyReject = reject;
+        });
         this.initialize();
     }
 
 
     async initialize() {
-        const isWebGPUSupported = await detectWebGPU();
-        const device = isWebGPUSupported ? "webgpu" : "wasm";
-        const dtype = isWebGPUSupported ? "fp32" : "q8";
-        const options = {
-            device: device,
-            dtype: dtype,
-            quantized: !isWebGPUSupported,
-        };
+        try {
+            const isWebGPUSupported = await detectWebGPU();
+            const device = isWebGPUSupported ? "webgpu" : "wasm";
+            const dtype = isWebGPUSupported ? "fp32" : "q8";
+            const options = {
+                device: device,
+                dtype: dtype,
+                quantized: !isWebGPUSupported,
+            };
 
-        this.transcriber = await pipeline(
-            'automatic-speech-recognition',
-            'onnx-community/moonshine-base-ONNX', // 'onnx-community/whisper-large-v3-turbo', 
-            options
-        );
-        //console.log('Transcriber loaded:', this.transcriber);
+            this.transcriber = await pipeline(
+                'automatic-speech-recognition',
+                'onnx-community/moonshine-base-ONNX', // 'onnx-community/whisper-large-v3-turbo', 
+                options
+            );
+            console.log('Speech-to-text model loaded successfully');
+            // Resolve the promise to indicate the model is ready
+            this._modelReadyResolve();
+        } catch (error) {
+            console.error('Error loading speech-to-text model:', error);
+            this._modelReadyReject(error);
+        }
     }
 
 
@@ -108,32 +120,24 @@ export class SpeechToText {
                         audioPlayback.style.display = 'block';
                         playbackStatus.textContent = 'Audio ready for playback:';
 
-                        let output = await this.transcriber(wavBlobUrl);
-
-                        if (output.text === undefined || output.text.length==0) {
+                        let output = await this.transcriber(wavBlobUrl);                        if (output.text === undefined || output.text.length == 0) {
                             console.log('Trying transcription again 1...');
 
+                            // Load audio and apply gain
                             wav = await convertAudioBufferToWav(await (async () => {
                                 const audioContext = new AudioContext();
                                 const arrayBuffer = await (await fetch(wavBlobUrl)).arrayBuffer();
                                 const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-                                // Increase volume by multiplying each sample by a factor (e.g., 1.5)
-                                const gain = 1.5;
-                                for (let i = 0; i < audioBuffer.numberOfChannels; i++) {
-                                    const channelData = audioBuffer.getChannelData(i);
-                                    for (let j = 0; j < channelData.length; j++) {
-                                        channelData[j] = Math.max(-1, Math.min(1, channelData[j] * gain));
-                                    }
-                                }
-                                return audioBuffer;
+                                // Use the applyAudioGain function to increase volume
+                                return applyAudioGain(audioBuffer, 1.5);
                             })());
                             wavBlob = new Blob([wav], { type: 'audio/wav' });
                             wavBlobUrl = URL.createObjectURL(wavBlob);
                             audioPlayback.src = wavBlobUrl;
                             output = await this.transcriber(wavBlobUrl);
                         }
-                        
-                        if (output.text === undefined || output.text.length==0) {
+
+                        if (output.text === undefined || output.text.length == 0) {
                             console.log('Trying transcription again 2...');
                             output = await this.transcriber(wavBlobUrl);
                         }

@@ -4,9 +4,17 @@ const my_worker = new Worker(new URL("./worker.js", import.meta.url), { type: "m
 
 let audioPlayer = new AudioPlayer();
 
+// Create a promise that will resolve when the TTS model is ready
+export const ttsModelReadyPromise = new Promise((resolve) => {
+    window.ttsModelReadyResolve = resolve;
+});
+
 const onMessageReceived = async (e) => {
     switch (e.data.status) {
         case "ready":
+            console.log("TTS model loaded successfully");
+            // Resolve the promise to indicate the TTS model is ready
+            window.ttsModelReadyResolve();
             break;
 
         case "device":

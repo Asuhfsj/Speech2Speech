@@ -1,9 +1,11 @@
 import { SpeechToText } from "./stt.js";
-import { textToSpeech } from "./tts.js";
+import { textToSpeech, ttsModelReadyPromise } from "./tts.js";
 
 export class Conversation {
     constructor() {
+        this.modelsReady = false;
         this.speechToText = new SpeechToText();
+        this.initModels();
         this.conversationHistory = [
             {
                 role: "system",
@@ -11,9 +13,37 @@ export class Conversation {
             }
         ];
     }
-
-    startRecording() {
-        this.speechToText.startRecording();
+      async initModels() {
+        try {
+            // Wait for both STT and TTS models to be initialized
+            await Promise.all([
+                this.speechToText.modelReadyPromise,
+                ttsModelReadyPromise
+            ]);
+            
+            // Signal that models are ready
+            this.modelsReady = true;
+            
+            // Update UI to enable recording
+            const toggleButton = document.getElementById('toggleRecording');
+            toggleButton.disabled = false;
+            toggleButton.textContent = 'Start Recording';
+            const recordingStatus = document.getElementById('recordingStatus');
+            recordingStatus.textContent = 'Models loaded. Click "Start Recording" to begin';
+        } catch (error) {
+            console.error('Error initializing models:', error);
+            const recordingStatus = document.getElementById('recordingStatus');
+            recordingStatus.textContent = 'Error loading models: ' + error.message;
+        }
+    }    startRecording() {
+        // Only start recording if models are ready
+        if (this.modelsReady) {
+            this.speechToText.startRecording();
+        } else {
+            console.warn('Cannot start recording: models are not yet loaded');
+            const recordingStatus = document.getElementById('recordingStatus');
+            recordingStatus.textContent = 'Please wait for models to finish loading...';
+        }
     }
 
     async stopRecording() {

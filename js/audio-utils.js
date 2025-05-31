@@ -11,6 +11,34 @@ export async function resampleAudio(audioBuffer, targetSampleRate) {
 }
 // const floatArray = resampledBuffer.getChannelData(0);
 
+/**
+ * Applies gain to an audio buffer to increase or decrease volume
+ * @param {AudioBuffer} audioBuffer - The audio buffer to adjust
+ * @param {number} gain - Gain factor (e.g., 1.5 for 50% louder)
+ * @returns {AudioBuffer} - The adjusted audio buffer
+ */
+export function applyAudioGain(audioBuffer, gain = 1.5) {
+    // Create a copy to avoid modifying the original
+    const audioContext = new AudioContext();
+    const newBuffer = audioContext.createBuffer(
+        audioBuffer.numberOfChannels,
+        audioBuffer.length,
+        audioBuffer.sampleRate
+    );
+
+    // Apply gain to each channel
+    for (let i = 0; i < audioBuffer.numberOfChannels; i++) {
+        const channelData = audioBuffer.getChannelData(i);
+        const newChannelData = newBuffer.getChannelData(i);
+        for (let j = 0; j < channelData.length; j++) {
+            // Apply gain and clamp to [-1, 1]
+            newChannelData[j] = Math.max(-1, Math.min(1, channelData[j] * gain));
+        }
+    }
+    
+    return newBuffer;
+}
+
 export function convertAudioBufferToWav(audioBuffer) {
     const numOfChannels = audioBuffer.numberOfChannels;
     const length = audioBuffer.length * numOfChannels * 2; // 2 bytes per sample

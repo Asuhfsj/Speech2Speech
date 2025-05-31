@@ -62,9 +62,14 @@ document.addEventListener('DOMContentLoaded', async function () {
     let timerInterval;
     let isRecording = false;
     
+    // Disable the button initially and show loading state
+    toggleButton.disabled = true;
+    toggleButton.textContent = 'Loading Models...';
+    recordingStatus.textContent = 'Loading speech recognition and synthesis models...';
+    
     setupTabNavigation();
 
-    let conversation = new Conversation();    
+    let conversation = new Conversation();
 
     toggleButton.addEventListener('click', function () {
         if (!isRecording) {
