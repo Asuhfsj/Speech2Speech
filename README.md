@@ -1,45 +1,75 @@
-# Speech Recording and Playback Web Application
+# Speech2Speech
 
-This is a simple web application that allows users to record their voice, send it to a server, and play it back.
+A web application that converts speech to text, processes it through an AI language model, and converts the response back to speech using advanced text-to-speech technology.
+
+This all happens in the local browser, nothing is sent to any server.
+
+Important: You NEED a local running chat LLM server like llama-server
 
 ## Features
 
-- Record audio from the user's microphone
-- Display recording time
-- Upload the recording to the server
-- Save the recording on the server
-- Play back the recording
+- **Speech Recognition**: Uses Moonshine to transcribe spoken english language only into text
+- **AI Processing**: Sends transcribed text to a language model API for intelligent responses
+- **Text-to-Speech**: Converts the AI response back to speech using Kokoro TTS
+- **Dark Mode**: Modern dark-themed UI for comfortable use
 
-## Setup and Installation
+## Technologies Used
 
-1. Make sure you have Python installed (Python 3.7 or higher is recommended)
+- **Moonshine**: Speech recognition model by Useful Sensors
+- **Kokoro**: Advanced text-to-speech synthesis engine
+- **Hugging Face Transformers.js**: Client-side machine learning models
+- **Web Audio API**: For audio recording and playback
+- **Modern JavaScript**: ES6+ features including modules, classes, and async/await
 
-2. Install the required dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
+## Getting Started
 
-3. Run the server:
-   ```
-   python server.py
-   ```
+### Prerequisites
 
-4. Open your web browser and navigate to:
-   ```
-   http://localhost:5000
-   ```
+- Modern web browser with JavaScript AND WebGPU enabled
+- Local or remote server to host the application
+- Optional: Web server that supports the language model API endpoint
 
-## How It Works
+### Installation
 
-1. The web application provides a simple interface with "Start Recording" and "Stop Recording" buttons.
-2. When you click "Start Recording", the app requests access to your microphone.
-3. After recording and clicking "Stop Recording", the audio is sent to the server.
-4. The server saves the audio file with a unique name in the "uploads" directory.
-5. The audio is then sent back to the browser for playback.
+1. Clone the repository
+2. Host the files on a web server
+3. Open the application in a web browser
 
-## Technical Details
+### Configuration
 
-- The server is built with Flask, a lightweight Python web framework.
-- Audio recording in the browser uses the MediaRecorder API.
-- Audio files are stored as WAV format by default.
-- Each recording is assigned a unique filename using UUID and timestamps.
+In the Settings tab:
+- Set the Chat Inference Server URL to your language model endpoint
+- Configure the System Prompt to control the AI assistant's behavior
+
+## How to Use
+
+1. Navigate to the Conversation tab
+2. Click "Start Recording" to begin speaking
+3. Click "Stop Recording" when finished to process the audio
+4. Wait for the AI to generate a response
+5. The response will be spoken aloud using the selected voice
+6. View the conversation history in the Transcription section
+
+## Project Structure
+
+- `/css`: Stylesheet files for the UI
+- `/js`: JavaScript modules for application logic
+  - `AudioPlayer.js`: Handles audio playback
+  - `conversation.js`: Manages the conversation flow
+  - `kokoro.js`: Text-to-speech implementation
+  - `stt.js`: Speech-to-text functionality
+  - `ui.js`: User interface interactions
+- `/index.html`: Main application page
+
+## Credits
+
+This project uses the following open source technologies:
+
+- [Moonshine](https://github.com/usefulsensors/moonshine) - Speech recognition model by Useful Sensors
+- [Kokoro](https://github.com/hexgrad/kokoro) - Text-to-speech synthesis engine
+- [Hugging Face Transformers.js](https://huggingface.co/docs/transformers.js) - Machine learning models in the browser
+
+## License
+
+Apache 2.0
+
