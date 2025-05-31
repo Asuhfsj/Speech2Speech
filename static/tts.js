@@ -1,6 +1,6 @@
 import { AudioPlayer } from "./AudioPlayer.js";
 
-const my_worker = new Worker(new URL("/static/worker.js", import.meta.url), { type: "module" });
+const my_worker = new Worker(new URL("./worker.js", import.meta.url), { type: "module" });
 
 let audioPlayer = new AudioPlayer();
 

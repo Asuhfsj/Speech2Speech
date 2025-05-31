@@ -1,6 +1,6 @@
 import { pipeline } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1/dist/transformers.min.js";
 
-import { convertAudioBufferToWav, resampleAudio } from "/static/convertAudioBufferToWav.js";
+import { convertAudioBufferToWav, resampleAudio } from "./convertAudioBufferToWav.js";
 
 let mediaRecorder;
 let audioChunks = [];
@@ -35,7 +35,7 @@ export class SpeechToText {
 
         this.transcriber = await pipeline(
             'automatic-speech-recognition',
-            'onnx-community/moonshine-base-ONNX',
+            'onnx-community/moonshine-base-ONNX', // 'onnx-community/whisper-large-v3-turbo', 
             options
         );
         //console.log('Transcriber loaded:', this.transcriber);
@@ -112,6 +112,24 @@ export class SpeechToText {
 
                         if (output.text === undefined || output.text.length==0) {
                             console.log('Trying transcription again 1...');
+
+                            wav = await convertAudioBufferToWav(await (async () => {
+                                const audioContext = new AudioContext();
+                                const arrayBuffer = await (await fetch(wavBlobUrl)).arrayBuffer();
+                                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                                // Increase volume by multiplying each sample by a factor (e.g., 1.5)
+                                const gain = 1.5;
+                                for (let i = 0; i < audioBuffer.numberOfChannels; i++) {
+                                    const channelData = audioBuffer.getChannelData(i);
+                                    for (let j = 0; j < channelData.length; j++) {
+                                        channelData[j] = Math.max(-1, Math.min(1, channelData[j] * gain));
+                                    }
+                                }
+                                return audioBuffer;
+                            })());
+                            wavBlob = new Blob([wav], { type: 'audio/wav' });
+                            wavBlobUrl = URL.createObjectURL(wavBlob);
+                            audioPlayback.src = wavBlobUrl;
                             output = await this.transcriber(wavBlobUrl);
                         }
                         
