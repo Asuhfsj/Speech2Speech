@@ -18,6 +18,7 @@
         <div class="tab-buttons">
             <button class="tab-button active" data-tab="conversation">Conversation</button>
             <button class="tab-button" data-tab="settings">Settings</button>
+            <button class="tab-button" data-tab="credits">Credits</button>
         </div>
 
         <div id="conversation" class="tab-content active">
@@ -38,7 +39,7 @@
                     <div id="transcriptionResult"></div>
                 </div>
 
-                <div class="playback-container">
+                <div class="playback-container" style="display: none">
                     <h2>Playback</h2>
                     <div class="status" id="playbackStatus">No recording available</div>
                     <audio id="audioPlayback" controls style="width: 100%; display: none;"></audio>
@@ -57,6 +58,23 @@
                 <div class="setting-group">
                     <label class="setting-label" for="systemPrompt">System Prompt:</label>
                     <textarea id="systemPrompt" class="setting-input">You are a helpful AI agent.</textarea>
+                </div>
+            </div>
+        </div>
+
+        <div id="credits" class="tab-content">
+            <div class="credits-container">
+                <h2>Credits</h2>
+                <p>This project uses the following open source projects:</p>
+                <div class="credit-item">
+                    <h3>Moonshine</h3>
+                    <p>Speech recognition model by Useful Sensors</p>
+                    <a href="https://github.com/usefulsensors/moonshine" target="_blank">https://github.com/usefulsensors/moonshine</a>
+                </div>
+                <div class="credit-item">
+                    <h3>Kokoro</h3>
+                    <p>Text-to-speech synthesis engine</p>
+                    <a href="https://github.com/hexgrad/kokoro" target="_blank">https://github.com/hexgrad/kokoro</a>
                 </div>
             </div>
         </div>
