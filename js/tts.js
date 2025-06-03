@@ -43,6 +43,14 @@ export function textToSpeech(text, voice) {
     }
 
     text = text.replaceAll("*", "");
-
+    
+    // Remove any special Markdown formatting for better speech
+    text = text.replace(/\*\*(.*?)\*\*/g, '$1'); // Bold
+    text = text.replace(/\*(.*?)\*/g, '$1');     // Italic
+    text = text.replace(/`(.*?)`/g, '$1');       // Code
+    text = text.replace(/~~(.*?)~~/g, '$1');     // Strikethrough
+    
     my_worker.postMessage({ type: "generate", text: text, voice: voice });
+    
+    return text;
 }

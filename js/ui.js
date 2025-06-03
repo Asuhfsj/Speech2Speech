@@ -1,4 +1,5 @@
 import { Conversation } from './conversation.js';
+import { initVoiceSelector } from './voice-selector.js';
 
 
 function updateTimer(recordingStartTime, recordingTimer) {
@@ -68,6 +69,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     recordingStatus.textContent = 'Loading speech recognition and synthesis models...';
     
     setupTabNavigation();
+    initVoiceSelector();
 
     let conversation = new Conversation();
 

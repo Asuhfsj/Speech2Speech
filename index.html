@@ -55,13 +55,25 @@
                     <input type="text" id="serverUrl" class="setting-input"
                         value="http://localhost:8080/v1/chat/completions">
                 </div>
-
                 <div class="setting-group">
                     <label class="setting-label" for="systemPrompt">System Prompt:</label>
                     <textarea id="systemPrompt" class="setting-input">You are a helpful AI agent.</textarea>
                 </div>
+
+                <div class="setting-group">
+                    <label class="setting-label" for="voiceSelect">Voice:</label>
+                    <select id="voiceSelect" class="setting-input">
+                        <option value="af_heart">Heart (Female)</option>
+                        <option value="af_bella">Bella (Female)</option>
+                        <option value="af_nicole">Nicole (Female)</option>
+                        <option value="am_onyx">Onyx (Male)</option>
+                        <option value="am_vampire">Vampire (Male)</option>
+                        <option value="am_walle">Wall-E (Male)</option>
+                    </select>
+                </div>
             </div>
-        </div>        <div id="credits" class="tab-content">
+        </div>
+        <div id="credits" class="tab-content">
             <div class="credits-container">
                 <h2>Credits</h2>
                 <p>This project uses the following open source projects:</p>

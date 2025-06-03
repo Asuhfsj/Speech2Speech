@@ -112,7 +112,7 @@ export class SpeechToText {
                         //const output = await transcriber(wav);
 
                         let wavBlob = new Blob([wav], { type: 'audio/wav' });
-                        const wavBlobUrl = URL.createObjectURL(wavBlob);
+                        let wavBlobUrl = URL.createObjectURL(wavBlob);
 
                         const playbackStatus = document.getElementById('playbackStatus');
                         const audioPlayback = document.getElementById('audioPlayback');
@@ -120,7 +120,8 @@ export class SpeechToText {
                         audioPlayback.style.display = 'block';
                         playbackStatus.textContent = 'Audio ready for playback:';
 
-                        let output = await this.transcriber(wavBlobUrl);                        if (output.text === undefined || output.text.length == 0) {
+                        let output = await this.transcriber(wavBlobUrl);                        
+                        if (output.text === undefined || output.text.length == 0) {
                             console.log('Trying transcription again 1...');
 
                             // Load audio and apply gain

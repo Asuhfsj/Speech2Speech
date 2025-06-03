@@ -15,6 +15,34 @@ self.postMessage({ status: "device", device });
 
 let model_id = "onnx-community/Kokoro-82M-v1.0-ONNX";
 
+const chunkQueue = [];
+let isProcessing = false;
+
+async function processQueue() {
+    if (isProcessing || chunkQueue.length === 0) return;
+    
+    isProcessing = true;
+    const { chunk, voice } = chunkQueue.shift();
+    
+    try {
+        console.log("Processing chunk", chunk);
+        const audio = await tts.generate(chunk, { voice });
+        let ab = audio.audio.buffer;
+        console.log("generate done");
+        self.postMessage({ status: "stream", audio: ab, text: chunk }, [ab]);
+    } catch (error) {
+        console.error("Error processing chunk:", error);
+        self.postMessage({ status: "error", error: error.message });
+    }
+    
+    isProcessing = false;
+    
+    if (chunkQueue.length > 0) {
+        processQueue();
+    } else {
+        self.postMessage({ status: "complete" });
+    }
+}
 
 const tts = await KokoroTTS.from_pretrained(model_id, {
     dtype: device === "wasm" ? "q8" : "fp32",
@@ -35,13 +63,9 @@ self.addEventListener("message", async (e) => {
     let chunks = splitTextSmart(text, 600);
 
     for (const chunk of chunks) {
-        console.log("chunk", chunk);
-        const audio = await tts.generate(chunk, { voice });
-        let ab = audio.audio.buffer;
-        console.log("generate done");
-        self.postMessage({ status: "stream", audio: ab, text: chunk }, [ab]);
+        chunkQueue.push({ chunk, voice });
     }
-
-    self.postMessage({ status: "complete" });
+    
+    processQueue();
 });
 
