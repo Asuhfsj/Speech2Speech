@@ -74,6 +74,16 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     let conversation = new Conversation();
 
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'F8') {
+            conversation.conversationHistory.push({
+                role: "user",
+                content: "please continue."
+            });
+            conversation.sendConversationHistory();
+        }
+    });
+
     toggleButton.addEventListener('click', function () {
         if (!isRecording) {
             isRecording = true;

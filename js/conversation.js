@@ -3,6 +3,8 @@ import { textToSpeech, ttsModelReadyPromise } from "./tts.js";
 import { processStreamingText } from "./sentence-detector.js";
 import { displayConversation } from "./ui.js";
 
+const $ = document.querySelector.bind(document);
+
 export class Conversation {
     constructor() {
         this.modelsReady = false;
@@ -45,18 +47,17 @@ export class Conversation {
     }
 
     async stopRecording() {
-        let $ = document.querySelector.bind(document);
         let text = await this.speechToText.stopRecording();
         console.log('Transcription:', text)
-
-        const transcriptionStatus = $('#transcriptionStatus');
-        transcriptionStatus.textContent = text;
-
+        $('#transcriptionStatus').textContent = text;
         this.conversationHistory.push({
             role: "user",
             content: text
         });
+        await this.sendConversationHistory();
+    }
 
+    async sendConversationHistory() {
         let serverUrl = $('#serverUrl').value;
         let system_prompt = $('#systemPrompt').value;
 
