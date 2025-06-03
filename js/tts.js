@@ -25,7 +25,7 @@ const onMessageReceived = async (e) => {
             break;
 
         case "stream":
-            console.log("stream", e.data);
+            console.log("audioPlayer.queueAudio", e.data);
             audioPlayer.queueAudio(e.data.audio);
             break;
     }

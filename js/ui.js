@@ -9,7 +9,8 @@ function updateTimer(recordingStartTime, recordingTimer) {
     recordingTimer.textContent = `${minutes}:${seconds}`;
 }
 
-function displayConversation(conversationHistory, transcriptionResult) {
+export function displayConversation(conversationHistory) {
+    let transcriptionResult = document.getElementById('transcriptionResult');
     let conversationHTML = '';
     // Skip the system message at index 0
     for (let i = 1; i < conversationHistory.length; i++) {
@@ -90,10 +91,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             toggleButton.textContent = 'Start Recording';
             recordingStatus.textContent = 'Recording stopped. Processing...';
             transcriptionStatus.textContent = 'Transcribing audio...';
-            conversation.stopRecording().then(() => {
-                // Update the conversation display after processing
-                displayConversation(conversation.conversationHistory, transcriptionResult);
-            });
+            conversation.stopRecording();
             clearInterval(timerInterval);
             recordingIndicator.style.display = 'none';
         }
